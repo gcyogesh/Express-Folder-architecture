@@ -1,20 +1,45 @@
 import { Request, Response } from "express"
 import UserModel from "../models/UserSchema"
+import CloudinaryPass from "../helpers/Cloudinary";
+import fs from 'fs'
+
+
+
 
 
 
 //   C of crud 
 
 export const CreateUsers = async(req:Request, res:Response)=>{
-    const {name, email, age, phone, address, image} =req.body;
-    if(!name || !email || !age || !phone || !address ){
-        res.status(400).json({msg:"All the field are required hai sathi.",sucess:false})
-        return;
+    const {name, email, age, phone, address} =req.body;
+    let image = null;
+    if (req.file) {
+        try {
+            
+            image = await CloudinaryPass(req.file.path);
+            console.log(image)
+             // delete the file of image after uplaoding to coludinary 
+             fs.unlink(req.file.path, (err)=>{
+                if(err){
+                    console.log("Failed to delete the file", err)
+                }else{
+                    console.log("Deleted sucesfyl!");
+                }
+             })
+
+        } catch (error) {
+            return res.status(500).json({ msg: "Failed to upload image", success: false });
+        }
     }
+   
+
+
   try {
     const newUser = await UserModel.create({
         name, email, age, phone, address, image
     })
+
+    
     res.status(201).json({msg:"User created sucessfully brother!", sucess:true, user:newUser})
   } catch (error) {
      console.log(error)
